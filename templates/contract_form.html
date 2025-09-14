@@ -1,0 +1,279 @@
+<!-- templates/contract_form.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>ورود مشخصات پیمان</h2>
+<form method="post" class="card">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="contract_name">نام پیمان:</label>
+            <input type="text" id="contract_name" name="contract_name" required>
+        </div>
+        <div class="form-group">
+            <label for="employer_name">نام کارفرما:</label>
+            <input type="text" id="employer_name" name="employer_name" required>
+        </div>
+        <div class="form-group">
+            <label for="contractor_name">نام پیمانکار:</label>
+            <input type="text" id="contractor_name" name="contractor_name" required>
+        </div>
+        <div class="form-group">
+            <label>محاسبه صورت وضعیت:</label>
+            <div class="radio-group-compact">
+                <label><input type="radio" name="calculation_type" value="فصلی" required>ضریب فصلی</label>
+                <label><input type="radio" name="calculation_type" value="کل" required>ضریب کل</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>شامل تعدیل می‌شود:</label>
+            <label><input type="checkbox" name="adjustment_included">بله</label>
+        </div>
+        <div class="form-group">
+            <label>متره با آدرس دارد:</label>
+            <label><input type="checkbox" name="survey_with_address">بله</label>
+        </div>
+        <div class="form-group">
+            <label for="contract_number">شماره قرارداد:</label>
+            <input type="text" id="contract_number" name="contract_number" required>
+        </div>
+        <div class="form-group">
+            <label for="initial_estimate">مبلغ برآورد اولیه:</label>
+            <input type="number" step="0.01" id="initial_estimate" name="initial_estimate" required>
+        </div>
+        <div class="form-group">
+            <label for="contract_amount">مبلغ پیمان:</label>
+            <input type="number" step="0.01" id="contract_amount" name="contract_amount" required>
+        </div>
+        <div class="form-group">
+            <label for="contract_date">تاریخ قرارداد:</label>
+            <input type="text" id="contract_date" name="contract_date" placeholder="YYYY/MM/DD" required>
+        </div>
+        <div class="form-group">
+            <label for="delivery_date">تاریخ تحویل پیمان:</label>
+            <input type="text" id="delivery_date" name="delivery_date" placeholder="YYYY/MM/DD" required>
+        </div>
+    </div>
+    <div class="form-group full-width">
+        <button type="button" id="openModalBtn">
+            <span style="display:inline-block; margin-left: 8px;">ورود فهارس بها و فصول</span>
+            <span class="plus-icon">+</span>
+        </button>
+    </div>
+    <input type="hidden" id="price_lists_data" name="price_lists_data">
+    <button type="submit">ثبت پیمان</button>
+</form>
+
+<!-- Modal for Price Lists and Chapters -->
+<div id="priceListModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>ورود اطلاعات فهارس بها</h3>
+        <div class="form-group">
+            <label for="modal_num_price_lists">تعداد فهارس بها:</label>
+            <input type="number" id="modal_num_price_lists" name="modal_num_price_lists" min="0" value="0">
+        </div>
+        <div id="modal_price_lists_container" class="modal-grid"></div>
+        <button id="saveModalBtn" type="button">تایید</button>
+    </div>
+</div>
+
+<h3 class="mt-4">پیمان‌های ثبت شده</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>نام پیمان</th>
+            <th>کارفرما</th>
+            <th>پیمانکار</th>
+            <th>تاریخ قرارداد</th>
+            <th>شماره قرارداد</th>
+            <th>مبلغ اولیه</th>
+            <th>مبلغ پیمان</th>
+            <th>فهارس بها</th>
+            <th>تاریخ تحویل</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contract in contracts %}
+        <tr>
+            <td>{{ contract.contract_name }}</td>
+            <td>{{ contract.employer_name }}</td>
+            <td>{{ contract.contractor_name }}</td>
+            <td>{{ jdatetime.date.fromgregorian(date=contract.contract_date).strftime('%Y/%m/%d') }}</td>
+            <td>{{ contract.contract_number }}</td>
+            <td>{{ contract.initial_estimate }}</td>
+            <td>{{ contract.contract_amount }}</td>
+            <td>
+                <ul>
+                    {% for price_list in contract.price_lists_json %}
+                        <li>
+                            <strong>{{ price_list.name }}</strong>
+                            <ul>
+                                {% for chapter in price_list.chapters %}
+                                    <li>شماره {{ chapter.number }}: {{ chapter.name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </td>
+            <td>{{ jdatetime.date.fromgregorian(date=contract.delivery_date).strftime('%Y/%m/%d') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('priceListModal');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.querySelector('.close-btn');
+        const saveModalBtn = document.getElementById('saveModalBtn');
+        const numPriceListsInput = document.getElementById('modal_num_price_lists');
+        const priceListContainer = document.getElementById('modal_price_lists_container');
+        const priceListsDataInput = document.getElementById('price_lists_data');
+
+        // Initialize date pickers
+        $(document).ready(function() {
+            $("#contract_date").persianDatepicker({
+                initialValue: false,
+                format: 'YYYY/MM/DD',
+                autoClose: true
+            });
+            $("#delivery_date").persianDatepicker({
+                initialValue: false,
+                format: 'YYYY/MM/DD',
+                autoClose: true
+            });
+        });
+
+        // Functions to manage modal state and body scrolling
+        function openModal() {
+            modal.style.display = 'block';
+            document.body.classList.add('modal-open');
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        openModalBtn.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        numPriceListsInput.addEventListener('input', () => {
+            const count = parseInt(numPriceListsInput.value);
+            priceListContainer.innerHTML = '';
+            if (isNaN(count) || count <= 0) {
+                return;
+            }
+
+            for (let i = 0; i < count; i++) {
+                const priceListGroup = document.createElement('div');
+                priceListGroup.classList.add('price-list-group');
+                
+                const formGrid = document.createElement('div');
+                formGrid.classList.add('price-list-grid');
+
+                const column1 = document.createElement('div');
+                column1.classList.add('grid-column');
+                const column2 = document.createElement('div');
+                column2.classList.add('grid-column');
+
+                // Column 1
+                const priceListLabel = document.createElement('label');
+                priceListLabel.textContent = `نام فهرست بهای ${i + 1}:`;
+                const priceListInput = document.createElement('input');
+                priceListInput.type = 'text';
+                priceListInput.name = `price_list_name_${i}`;
+                priceListInput.required = true;
+
+                const numChaptersLabel = document.createElement('label');
+                numChaptersLabel.textContent = `تعداد فصول:`;
+                const numChaptersInput = document.createElement('input');
+                numChaptersInput.type = 'number';
+                numChaptersInput.name = `num_chapters_${i}`;
+                numChaptersInput.min = '0';
+                numChaptersInput.value = '0';
+                
+                column1.appendChild(priceListLabel);
+                column1.appendChild(priceListInput);
+                column1.appendChild(numChaptersLabel);
+                column1.appendChild(numChaptersInput);
+
+                // Column 2
+                const chaptersContainer = document.createElement('div');
+                chaptersContainer.classList.add('chapters-container');
+                column2.appendChild(chaptersContainer);
+
+                numChaptersInput.addEventListener('input', () => {
+                    const chapterCount = parseInt(numChaptersInput.value);
+                    chaptersContainer.innerHTML = '';
+                    if (isNaN(chapterCount) || chapterCount <= 0) {
+                        return;
+                    }
+                    for (let j = 0; j < chapterCount; j++) {
+                        const chapterInputGroup = document.createElement('div');
+                        chapterInputGroup.classList.add('form-group-inline');
+                        const chapterNumberInput = document.createElement('input');
+                        chapterNumberInput.type = 'text';
+                        chapterNumberInput.name = `chapter_number_${i}_${j}`;
+                        chapterNumberInput.placeholder = 'شماره فصل';
+                        const chapterNameInput = document.createElement('input');
+                        chapterNameInput.type = 'text';
+                        chapterNameInput.name = `chapter_name_${i}_${j}`;
+                        chapterNameInput.placeholder = 'نام فصل';
+
+                        chapterInputGroup.appendChild(chapterNumberInput);
+                        chapterInputGroup.appendChild(chapterNameInput);
+                        chaptersContainer.appendChild(chapterInputGroup);
+                    }
+                });
+                
+                formGrid.appendChild(column1);
+                formGrid.appendChild(column2);
+                priceListGroup.appendChild(formGrid);
+                priceListContainer.appendChild(priceListGroup);
+            }
+        });
+
+        saveModalBtn.addEventListener('click', () => {
+            const priceLists = [];
+            const priceListGroups = priceListContainer.querySelectorAll('.price-list-group');
+            
+            priceListGroups.forEach((group, priceListIndex) => {
+                const priceListNameInput = group.querySelector(`input[name="price_list_name_${priceListIndex}"]`);
+                const numChaptersInput = group.querySelector(`input[name="num_chapters_${priceListIndex}"]`);
+                const chaptersContainer = group.querySelector('.chapters-container');
+                const chapterInputs = chaptersContainer.querySelectorAll('input[type="text"]');
+                
+                const chapters = [];
+                for (let i = 0; i < chapterInputs.length; i += 2) {
+                    chapters.push({
+                        number: chapterInputs[i].value,
+                        name: chapterInputs[i+1].value
+                    });
+                }
+
+                priceLists.push({
+                    name: priceListNameInput.value,
+                    num_chapters: parseInt(numChaptersInput.value) || 0,
+                    chapters: chapters
+                });
+            });
+            
+            priceListsDataInput.value = JSON.stringify(priceLists);
+            closeModal();
+        });
+    });
+</script>
+{% endblock %}

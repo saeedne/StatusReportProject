@@ -1,0 +1,210 @@
+<!-- templates/record_form.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>ورود اطلاعات فهرست بها</h2>
+<form method="post" class="card">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="contract_select">انتخاب پیمان:</label>
+            <select id="contract_select" name="contract_select" required>
+                <option value="">انتخاب کنید...</option>
+                {% for contract in contracts %}
+                    <option value="{{ contract.id }}" data-price-lists='{{ contract.price_lists | tojson }}'>{{ contract.contract_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="price_list_select">انتخاب فهرست بها:</label>
+            <select id="price_list_select" name="price_list_select" required>
+                <option value="">ابتدا پیمان را انتخاب کنید</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="chapter_select">انتخاب فصل:</label>
+            <select id="chapter_select" name="chapter_select" required>
+                <option value="">ابتدا فهرست بها را انتخاب کنید</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-grid-2-1-1">
+        <div class="form-group">
+            <label for="code">کد فهرست بها:</label>
+            <input type="text" id="code" name="code" required>
+        </div>
+        <div class="form-group full-width-in-grid">
+            <label for="description">شرح ردیف:</label>
+            <input type="text" id="description" name="description" required>
+        </div>
+        <div class="form-group">
+            <label for="unit">واحد:</label>
+            <input type="text" id="unit" name="unit" required>
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="yearly_volume">حجم عملیات سالیانه:</label>
+            <input type="number" step="0.01" id="yearly_volume" name="yearly_volume" required>
+        </div>
+        <div class="form-group">
+            <label for="repeats">تعداد تکرار:</label>
+            <input type="number" id="repeats" name="repeats" required>
+        </div>
+        <div class="form-group">
+            <label for="contract_duration">مدت قرارداد (ماه):</label>
+            <input type="number" id="contract_duration" name="contract_duration" required>
+        </div>
+        <div class="form-group">
+            <label for="unit_price">قیمت واحد (ریال):</label>
+            <input type="number" step="0.01" id="unit_price" name="unit_price" required>
+        </div>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="submit-btn">ثبت رکورد</button>
+        <a href="{{ url_for('download_records_excel') }}" class="download-btn">
+            خروجی اکسل
+        </a>
+    </div>
+</form>
+
+<h3 class="mt-4">ورود دسته‌ای از فایل اکسل</h3>
+<div class="card">
+    <div class="form-actions">
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('upload_records_excel') }}" style="display: contents;">
+            <input type="file" id="excel_file" name="file" accept=".xlsx, .xls" required style="display:none;">
+            <input type="hidden" id="excel_contract_id" name="contract_id">
+            <input type="hidden" id="excel_price_list_name" name="price_list_name">
+            <input type="hidden" id="excel_chapter_name" name="chapter_name">
+            <button type="button" class="upload-btn" onclick="document.getElementById('excel_file').click();">
+                انتخاب فایل
+            </button>
+            <button type="submit" class="submit-btn">آپلود و ثبت</button>
+        </form>
+    </div>
+    <div class="excel-guide">
+        <h4>راهنمای قالب فایل اکسل</h4>
+        <p>فایل اکسل شما باید دقیقاً شامل ستون‌های زیر باشد (بدون سرصفحه اضافی):</p>
+        <div class="table-container">
+            <table class="table-guide">
+                <thead>
+                    <tr>
+                        <th>شرح ردیف</th>
+                        <th>کد فهرست بها</th>
+                        <th>واحد</th>
+                        <th>حجم عملیات سالیانه</th>
+                        <th>تعداد تکرار</th>
+                        <th>مدت قرارداد</th>
+                        <th>قیمت واحد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>...</td>
+                        <td>...</td>
+                        <td>...</td>
+                        <td>...</td>
+                        <td>...</td>
+                        <td>...</td>
+                        <td>...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-2">
+            <a href="{{ url_for('download_excel_template') }}" class="download-btn">
+                دریافت فایل نمونه
+            </a>
+        </div>
+        <div class="mt-2">
+            <p>**نکته مهم**: قبل از آپلود فایل، پیمان، فهرست بها و فصل مورد نظر را از فرم بالا انتخاب کنید. داده‌های اکسل به این مقادیر مرتبط می‌شوند.</p>
+        </div>
+    </div>
+</div>
+
+<h3 class="mt-4">رکورد‌های ثبت شده</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>شرح</th>
+            <th>کد</th>
+            <th>واحد</th>
+            <th>حجم</th>
+            <th>تکرار</th>
+            <th>مدت</th>
+            <th>قیمت واحد</th>
+            <th>پیمان</th>
+            <th>فهرست بها</th>
+            <th>فصل</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.description }}</td>
+            <td>{{ record.code }}</td>
+            <td>{{ record.unit }}</td>
+            <td>{{ record.yearly_volume }}</td>
+            <td>{{ record.repeats }}</td>
+            <td>{{ record.contract_duration }}</td>
+            <td>{{ record.unit_price }}</td>
+            <td>{{ record.contract.contract_name if record.contract }}</td>
+            <td>{{ record.price_list_name }}</td>
+            <td>{{ record.chapter_name }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contractSelect = document.getElementById('contract_select');
+        const priceListSelect = document.getElementById('price_list_select');
+        const chapterSelect = document.getElementById('chapter_select');
+        const excelContractIdInput = document.getElementById('excel_contract_id');
+        const excelPriceListNameInput = document.getElementById('excel_price_list_name');
+        const excelChapterNameInput = document.getElementById('excel_chapter_name');
+
+        function updateExcelHiddenFields() {
+            excelContractIdInput.value = contractSelect.value;
+            excelPriceListNameInput.value = priceListSelect.options[priceListSelect.selectedIndex].text;
+            excelChapterNameInput.value = chapterSelect.options[chapterSelect.selectedIndex].text;
+        }
+
+        // Populate price lists based on selected contract
+        contractSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const priceListsData = JSON.parse(selectedOption.dataset.priceLists || '[]');
+            
+            priceListSelect.innerHTML = '<option value="">انتخاب کنید...</option>';
+            chapterSelect.innerHTML = '<option value="">ابتدا پیمان را انتخاب کنید</option>';
+
+            priceListsData.forEach(priceList => {
+                const option = document.createElement('option');
+                option.value = priceList.name;
+                option.textContent = priceList.name;
+                option.dataset.chapters = JSON.stringify(priceList.chapters);
+                priceListSelect.appendChild(option);
+            });
+            updateExcelHiddenFields();
+        });
+
+        // Populate chapters based on selected price list
+        priceListSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const chaptersData = JSON.parse(selectedOption.dataset.chapters || '[]');
+            
+            chapterSelect.innerHTML = '<option value="">انتخاب کنید...</option>';
+
+            chaptersData.forEach(chapter => {
+                const option = document.createElement('option');
+                option.value = chapter.name;
+                option.textContent = `شماره ${chapter.number}: ${chapter.name}`;
+                chapterSelect.appendChild(option);
+            });
+            updateExcelHiddenFields();
+        });
+        
+        chapterSelect.addEventListener('change', updateExcelHiddenFields);
+    });
+</script>
+{% endblock %}

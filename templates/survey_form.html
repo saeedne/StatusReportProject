@@ -1,0 +1,119 @@
+<!-- templates/survey_form.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>ورود اطلاعات متره پیمان</h2>
+<form method="post" class="card">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="contract_select">انتخاب پیمان:</label>
+            <select id="contract_select" name="contract_select" required>
+                <option value="">انتخاب کنید...</option>
+                {% for contract in contracts %}
+                    <option value="{{ contract.id }}">{{ contract.contract_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="location">محل (لکه):</label>
+            <input type="text" id="location" name="location" required>
+        </div>
+        <div class="form-group">
+            <label for="item_title">عنوان موجودی متره:</label>
+            <input type="text" id="item_title" name="item_title" required>
+        </div>
+        <div class="form-group">
+            <label for="quantity">مقدار:</label>
+            <input type="number" step="0.01" id="quantity" name="quantity" required>
+        </div>
+        <div class="form-group">
+            <label for="unit">واحد:</label>
+            <input type="text" id="unit" name="unit" required>
+        </div>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="submit-btn">ثبت متره</button>
+    </div>
+</form>
+
+<h3 class="mt-4">ورود دسته‌ای از فایل اکسل</h3>
+<div class="card">
+    <div class="form-actions">
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('upload_surveys_excel') }}" style="display: contents;">
+            <input type="hidden" id="excel_contract_id_survey" name="contract_id">
+            <input type="file" id="excel_file_survey" name="file" accept=".xlsx, .xls" required style="display:none;">
+            <button type="button" class="upload-btn" onclick="document.getElementById('excel_file_survey').click();">
+                انتخاب فایل
+            </button>
+            <button type="submit" class="submit-btn">آپلود و ثبت</button>
+        </form>
+    </div>
+    <div class="excel-guide">
+        <h4>راهنمای قالب فایل اکسل</h4>
+        <p>فایل اکسل شما باید دقیقاً شامل ستون‌های زیر باشد (بدون سرصفحه اضافی):</p>
+        <div class="table-container">
+            <table class="table-guide">
+                <thead>
+                    <tr>
+                        <th>محل</th>
+                        <th>عنوان موجودی متره</th>
+                        <th>مقدار</th>
+                        <th>واحد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>...</td>
+                        <td>...</td>
+                        <td>...</td>
+                        <td>...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-2">
+            <a href="{{ url_for('download_survey_template') }}" class="download-btn">
+                دریافت فایل نمونه
+            </a>
+        </div>
+        <div class="mt-2">
+            <p>**نکته مهم**: قبل از آپلود فایل، پیمان مورد نظر را از فرم بالا انتخاب کنید. داده‌های اکسل به این پیمان مرتبط می‌شوند.</p>
+        </div>
+    </div>
+</div>
+
+<h3 class="mt-4">متره‌های ثبت شده</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>پیمان</th>
+            <th>محل</th>
+            <th>عنوان موجودی</th>
+            <th>مقدار</th>
+            <th>واحد</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for survey in surveys %}
+        <tr>
+            <td>{{ survey.contract_name }}</td>
+            <td>{{ survey.location }}</td>
+            <td>{{ survey.item_title }}</td>
+            <td>{{ survey.quantity }}</td>
+            <td>{{ survey.unit }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contractSelect = document.getElementById('contract_select');
+        const excelContractIdInput = document.getElementById('excel_contract_id_survey');
+
+        contractSelect.addEventListener('change', function() {
+            excelContractIdInput.value = this.value;
+        });
+    });
+</script>
+{% endblock %}

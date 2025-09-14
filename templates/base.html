@@ -1,0 +1,42 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت پیمان</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}").then(reg => {
+                    console.log('Service Worker registered!', reg);
+                }).catch(err => {
+                    console.log('Service Worker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>سیستم مدیریت پیمان</h1>
+            <nav>
+                <a href="{{ url_for('contract_form') }}">مشخصات پیمان</a>
+                <a href="{{ url_for('record_form') }}">اطلاعات فهرست بها</a>
+                <a href="{{ url_for('survey_form') }}">متره پیمان</a>
+            </nav>
+        </div>
+    </header>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <div class="container">
+            <p>کلیه حقوق محفوظ است &copy; ۲۰۲۴</p>
+        </div>
+    </footer>
+</body>
+</html>
